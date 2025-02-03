@@ -7,15 +7,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from './ui/dialog';
 import { Button } from './ui/button';
 import { toast } from './ui/use-toast';
 import frLocale from '@fullcalendar/core/locales/fr';
-
-interface Reservation {
-  id: string;
-  title: string;
-  start: string;
-  end: string;
-  customerName: string;
-  email?: string;
-}
+import { supabase } from '@/lib/supabase';
+import { Reservation } from '@/lib/supabase';
 
 const AdminCalendar = () => {
   const [events, setEvents] = useState<Reservation[]>([]);
@@ -28,19 +21,15 @@ const AdminCalendar = () => {
 
   const fetchReservations = async () => {
     try {
-      // TODO: Implement Supabase fetch
-      const mockData = [
-        {
-          id: '1',
-          title: 'Lavage complet',
-          start: '2024-02-03T10:00:00',
-          end: '2024-02-03T11:00:00',
-          customerName: 'John Doe',
-          email: 'john@example.com'
-        }
-      ];
-      setEvents(mockData);
-    } catch (error) {
+      const { data, error } = await supabase
+        .from('reservations')
+        .select('*')
+        .order('start_time', { ascending: true });
+
+      if (error) throw error;
+
+      setEvents(data || []);
+    } catch (error: any) {
       console.error('Error fetching reservations:', error);
       toast({
         title: 'Erreur',
@@ -61,14 +50,20 @@ const AdminCalendar = () => {
   const handleDeleteReservation = async () => {
     if (!selectedEvent) return;
     try {
-      // TODO: Implement Supabase delete
+      const { error } = await supabase
+        .from('reservations')
+        .delete()
+        .eq('id', selectedEvent.id);
+
+      if (error) throw error;
+
       toast({
         title: 'Succès',
         description: 'Réservation supprimée avec succès'
       });
       setIsDialogOpen(false);
       await fetchReservations();
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error deleting reservation:', error);
       toast({
         title: 'Erreur',
@@ -76,6 +71,18 @@ const AdminCalendar = () => {
         variant: 'destructive'
       });
     }
+  };
+
+  const formatEvents = (reservations: Reservation[]) => {
+    return reservations.map(reservation => ({
+      id: reservation.id,
+      title: reservation.guest_name || 'Réservation',
+      start: reservation.start_time,
+      end: reservation.end_time,
+      extendedProps: {
+        ...reservation
+      }
+    }));
   };
 
   return (
@@ -89,7 +96,7 @@ const AdminCalendar = () => {
           right: 'dayGridMonth,timeGridWeek,timeGridDay'
         }}
         locale={frLocale}
-        events={events}
+        events={formatEvents(events)}
         eventClick={handleEventClick}
         height="auto"
         slotMinTime="08:00:00"
@@ -103,9 +110,10 @@ const AdminCalendar = () => {
           </DialogHeader>
           {selectedEvent && (
             <div className="space-y-4">
-              <p><strong>Client:</strong> {selectedEvent.customerName}</p>
-              <p><strong>Email:</strong> {selectedEvent.email || 'Non renseigné'}</p>
-              <p><strong>Date:</strong> {new Date(selectedEvent.start).toLocaleString('fr-FR')}</p>
+              <p><strong>Client:</strong> {selectedEvent.guest_name || 'Non renseigné'}</p>
+              <p><strong>Email:</strong> {selectedEvent.guest_email || 'Non renseigné'}</p>
+              <p><strong>Téléphone:</strong> {selectedEvent.guest_phone || 'Non renseigné'}</p>
+              <p><strong>Date:</strong> {new Date(selectedEvent.start_time).toLocaleString('fr-FR')}</p>
               <div className="flex justify-end space-x-2">
                 <Button variant="destructive" onClick={handleDeleteReservation}>
                   Supprimer
