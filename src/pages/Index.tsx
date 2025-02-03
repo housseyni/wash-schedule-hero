@@ -2,6 +2,7 @@ import Navbar from "@/components/Navbar";
 import Hero from "@/components/Hero";
 import Formules from "@/components/Formules";
 import Reservation from "@/components/Reservation";
+import Contact from "@/components/Contact";
 
 const Index = () => {
   return (
@@ -10,6 +11,7 @@ const Index = () => {
       <Hero />
       <Formules />
       <Reservation />
+      <Contact />
     </div>
   );
 };

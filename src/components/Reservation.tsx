@@ -1,6 +1,8 @@
 import { useState } from "react";
 import { Calendar } from "@/components/ui/calendar";
 import { Button } from "@/components/ui/button";
+import { supabase } from "@/lib/supabase"; // Si tu utilises un fichier de configuration comme lib/supabase.ts
+
 import {
   Form,
   FormControl,
@@ -12,7 +14,13 @@ import {
 import { useForm } from "react-hook-form";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "./ui/select";
 import { Input } from "./ui/input";
 import { toast } from "./ui/use-toast";
 
@@ -29,13 +37,13 @@ const formules: FormuleType[] = [
   { id: "3", title: "Lavage Premium", duration: 90, price: 80 },
 ];
 
-const availableSlots = [
-  "09:00", "10:00", "11:00", "14:00", "15:00", "16:00"
-];
+const availableSlots = ["09:00", "10:00", "11:00", "14:00", "15:00", "16:00"];
 
 const Reservation = () => {
   const [date, setDate] = useState<Date | undefined>(new Date());
-  const [selectedFormule, setSelectedFormule] = useState<FormuleType | null>(null);
+  const [selectedFormule, setSelectedFormule] = useState<FormuleType | null>(
+    null
+  );
   const [guestMode, setGuestMode] = useState(false);
 
   const form = useForm({
@@ -49,7 +57,7 @@ const Reservation = () => {
     },
   });
 
-  const onSubmit = async (data: any) => {
+  /*const onSubmit = async (data: any) => {
     try {
       // TODO: Implement Supabase reservation creation
       console.log("Reservation submitted:", data);
@@ -60,6 +68,42 @@ const Reservation = () => {
       });
       
       form.reset();
+    } catch (error) {
+      console.error("Reservation error:", error);
+      toast({
+        title: "Erreur",
+        description: "Impossible de créer la réservation",
+        variant: "destructive",
+      });
+    }
+  };*/
+
+  const onSubmit = async (data: any) => {
+    try {
+      const { name, email, phone, date, time, formule } = data;
+
+      // Créer une nouvelle réservation dans Supabase
+      const { error } = await supabase
+        .from("reservations") // Assurez-vous que la table 'reservations' existe dans Supabase
+        .insert([
+          {
+            guest_name: name,
+            guest_email: email,
+            guest_phone: phone,
+            date: format(new Date(date), "yyyy-MM-dd"), // Assurez-vous que la date est bien formatée
+            time: time,
+            formule: formule,
+          },
+        ]);
+
+      if (error) throw error;
+
+      toast({
+        title: "Réservation confirmée",
+        description: "Votre réservation a été enregistrée avec succès",
+      });
+
+      form.reset(); // Réinitialiser le formulaire après la soumission
     } catch (error) {
       console.error("Reservation error:", error);
       toast({
@@ -88,7 +132,9 @@ const Reservation = () => {
                     <Select
                       onValueChange={(value) => {
                         field.onChange(value);
-                        setSelectedFormule(formules.find(f => f.id === value) || null);
+                        setSelectedFormule(
+                          formules.find((f) => f.id === value) || null
+                        );
                       }}
                     >
                       <FormControl>
