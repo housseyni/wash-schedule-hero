@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Menu, X } from "lucide-react";
+import Auth from "./Auth";
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -31,7 +32,7 @@ const Navbar = () => {
                 {item.label}
               </a>
             ))}
-            <Button variant="default">Connexion</Button>
+            <Auth />
           </div>
 
           {/* Mobile Menu Button */}
@@ -57,9 +58,9 @@ const Navbar = () => {
                 {item.label}
               </a>
             ))}
-            <Button className="w-full mt-4" variant="default">
-              Connexion
-            </Button>
+            <div className="mt-4">
+              <Auth />
+            </div>
           </div>
         )}
       </div>

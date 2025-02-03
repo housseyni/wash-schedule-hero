@@ -1,6 +1,7 @@
 import Navbar from "@/components/Navbar";
 import Hero from "@/components/Hero";
 import Formules from "@/components/Formules";
+import Reservation from "@/components/Reservation";
 
 const Index = () => {
   return (
@@ -8,6 +9,7 @@ const Index = () => {
       <Navbar />
       <Hero />
       <Formules />
+      <Reservation />
     </div>
   );
 };
