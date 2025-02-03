@@ -10,16 +10,33 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useState } from "react";
+import { toast } from "./ui/use-toast";
 
 const Auth = () => {
   const [isLogin, setIsLogin] = useState(true);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [name, setName] = useState("");
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // TODO: Implement authentication with Supabase
-    console.log("Auth submitted:", { email, password, isLogin });
+    try {
+      // TODO: Implement Supabase auth
+      console.log("Auth submitted:", { email, password, name, isLogin });
+      
+      // Simulate success
+      toast({
+        title: isLogin ? "Connexion réussie" : "Inscription réussie",
+        description: isLogin ? "Bienvenue !" : "Votre compte a été créé avec succès",
+      });
+    } catch (error) {
+      console.error("Auth error:", error);
+      toast({
+        title: "Erreur",
+        description: "Une erreur est survenue",
+        variant: "destructive",
+      });
+    }
   };
 
   return (
@@ -37,6 +54,17 @@ const Auth = () => {
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
+          {!isLogin && (
+            <div className="space-y-2">
+              <Label htmlFor="name">Nom</Label>
+              <Input
+                id="name"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                required
+              />
+            </div>
+          )}
           <div className="space-y-2">
             <Label htmlFor="email">Email</Label>
             <Input
