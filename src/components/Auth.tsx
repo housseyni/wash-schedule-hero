@@ -1,4 +1,6 @@
 import { Button } from "@/components/ui/button";
+// Assurez-vous que le chemin est correct
+
 import {
   Dialog,
   DialogContent,
