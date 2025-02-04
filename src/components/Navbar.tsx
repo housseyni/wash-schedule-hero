@@ -17,8 +17,11 @@ const Navbar = () => {
     <nav className="fixed w-full bg-white/90 backdrop-blur-sm z-50 shadow-sm">
       <div className="container mx-auto px-4">
         <div className="flex justify-between items-center h-16">
-          <a href="#" className="font-heading text-2xl font-bold text-primary-600">
-            CarWash Pro
+          <a
+            href="#"
+            className="font-heading text-2xl font-bold text-primary-600"
+          >
+            DeustyWash
           </a>
 
           {/* Desktop Menu */}

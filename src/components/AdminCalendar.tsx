@@ -1,14 +1,14 @@
-import { useEffect, useState } from 'react';
-import FullCalendar from '@fullcalendar/react';
-import dayGridPlugin from '@fullcalendar/daygrid';
-import timeGridPlugin from '@fullcalendar/timegrid';
-import interactionPlugin from '@fullcalendar/interaction';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from './ui/dialog';
-import { Button } from './ui/button';
-import { toast } from './ui/use-toast';
-import frLocale from '@fullcalendar/core/locales/fr';
-import { supabase } from '@/lib/supabase';
-import { Reservation } from '@/lib/supabase';
+import { useEffect, useState } from "react";
+import FullCalendar from "@fullcalendar/react";
+import dayGridPlugin from "@fullcalendar/daygrid";
+import timeGridPlugin from "@fullcalendar/timegrid";
+import interactionPlugin from "@fullcalendar/interaction";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "./ui/dialog";
+import { Button } from "./ui/button";
+import { toast } from "./ui/use-toast";
+import frLocale from "@fullcalendar/core/locales/fr";
+import { supabase } from "@/lib/supabase";
+import { Reservation } from "@/lib/supabase";
 
 const AdminCalendar = () => {
   const [events, setEvents] = useState<Reservation[]>([]);
@@ -22,25 +22,25 @@ const AdminCalendar = () => {
   const fetchReservations = async () => {
     try {
       const { data, error } = await supabase
-        .from('reservations')
-        .select('*')
-        .order('start_time', { ascending: true });
+        .from("reservations")
+        .select("*")
+        .order("start_time", { ascending: true });
 
       if (error) throw error;
 
       setEvents(data || []);
     } catch (error: any) {
-      console.error('Error fetching reservations:', error);
+      console.error("Error fetching reservations:", error);
       toast({
-        title: 'Erreur',
-        description: 'Impossible de charger les réservations',
-        variant: 'destructive'
+        title: "Erreur",
+        description: "Impossible de charger les réservations",
+        variant: "destructive",
       });
     }
   };
 
   const handleEventClick = (info: any) => {
-    const event = events.find(e => e.id === info.event.id);
+    const event = events.find((e) => e.id === info.event.id);
     if (event) {
       setSelectedEvent(event);
       setIsDialogOpen(true);
@@ -51,37 +51,37 @@ const AdminCalendar = () => {
     if (!selectedEvent) return;
     try {
       const { error } = await supabase
-        .from('reservations')
+        .from("reservations")
         .delete()
-        .eq('id', selectedEvent.id);
+        .eq("id", selectedEvent.id);
 
       if (error) throw error;
 
       toast({
-        title: 'Succès',
-        description: 'Réservation supprimée avec succès'
+        title: "Succès",
+        description: "Réservation supprimée avec succès",
       });
       setIsDialogOpen(false);
       await fetchReservations();
     } catch (error: any) {
-      console.error('Error deleting reservation:', error);
+      console.error("Error deleting reservation:", error);
       toast({
-        title: 'Erreur',
-        description: 'Impossible de supprimer la réservation',
-        variant: 'destructive'
+        title: "Erreur",
+        description: "Impossible de supprimer la réservation",
+        variant: "destructive",
       });
     }
   };
 
   const formatEvents = (reservations: Reservation[]) => {
-    return reservations.map(reservation => ({
+    return reservations.map((reservation) => ({
       id: reservation.id,
-      title: reservation.guest_name || 'Réservation',
+      title: reservation.guest_name || "Réservation",
       start: reservation.start_time,
       end: reservation.end_time,
       extendedProps: {
-        ...reservation
-      }
+        ...reservation,
+      },
     }));
   };
 
@@ -91,9 +91,9 @@ const AdminCalendar = () => {
         plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
         initialView="timeGridWeek"
         headerToolbar={{
-          left: 'prev,next today',
-          center: 'title',
-          right: 'dayGridMonth,timeGridWeek,timeGridDay'
+          left: "prev,next today",
+          center: "title",
+          right: "dayGridMonth,timeGridWeek,timeGridDay",
         }}
         locale={frLocale}
         events={formatEvents(events)}
@@ -101,6 +101,7 @@ const AdminCalendar = () => {
         height="auto"
         slotMinTime="08:00:00"
         slotMaxTime="20:00:00"
+        allDaySlot={false}
       />
 
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
@@ -110,17 +111,27 @@ const AdminCalendar = () => {
           </DialogHeader>
           {selectedEvent && (
             <div className="space-y-4">
-              <p><strong>Client:</strong> {selectedEvent.guest_name || 'Non renseigné'}</p>
-              <p><strong>Email:</strong> {selectedEvent.guest_email || 'Non renseigné'}</p>
-              <p><strong>Téléphone:</strong> {selectedEvent.guest_phone || 'Non renseigné'}</p>
-              <p><strong>Date:</strong> {new Date(selectedEvent.start_time).toLocaleString('fr-FR')}</p>
+              <p>
+                <strong>Client:</strong>{" "}
+                {selectedEvent.guest_name || "Non renseigné"}
+              </p>
+              <p>
+                <strong>Email:</strong>{" "}
+                {selectedEvent.guest_email || "Non renseigné"}
+              </p>
+              <p>
+                <strong>Téléphone:</strong>{" "}
+                {selectedEvent.guest_phone || "Non renseigné"}
+              </p>
+              <p>
+                <strong>Date:</strong>{" "}
+                {new Date(selectedEvent.start_time).toLocaleString("fr-FR")}
+              </p>
               <div className="flex justify-end space-x-2">
                 <Button variant="destructive" onClick={handleDeleteReservation}>
                   Supprimer
                 </Button>
-                <Button onClick={() => setIsDialogOpen(false)}>
-                  Fermer
-                </Button>
+                <Button onClick={() => setIsDialogOpen(false)}>Fermer</Button>
               </div>
             </div>
           )}

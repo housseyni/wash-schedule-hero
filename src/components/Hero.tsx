@@ -10,7 +10,7 @@ const Hero = () => {
       <div
         className="absolute inset-0 bg-cover bg-center"
         style={{
-          backgroundImage: "url('/placeholder.svg')",
+          backgroundImage: "url('/deusty_wash.png')",
         }}
       />
       <div className="container mx-auto px-4 relative z-20 text-center">

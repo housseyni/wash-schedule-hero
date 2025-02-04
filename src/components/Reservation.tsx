@@ -1,8 +1,7 @@
 import { useState } from "react";
 import { Calendar } from "@/components/ui/calendar";
 import { Button } from "@/components/ui/button";
-import { supabase } from "@/lib/supabase"; // Si tu utilises un fichier de configuration comme lib/supabase.ts
-
+import { supabase } from "@/lib/supabase";
 import {
   Form,
   FormControl,
@@ -32,12 +31,12 @@ type FormuleType = {
 };
 
 const formules: FormuleType[] = [
-  { id: "1", title: "Lavage Simple", duration: 30, price: 30 },
-  { id: "2", title: "Lavage Complet", duration: 60, price: 50 },
-  { id: "3", title: "Lavage Premium", duration: 90, price: 80 },
+  { id: "1", title: "Formule express", duration: 50, price: 30 },
+  { id: "2", title: "Formule Médium", duration: 90, price: 50 },
+  { id: "3", title: "Formule Intégrale", duration: 240, price: 80 },
 ];
 
-const availableSlots = ["09:00", "10:00", "11:00", "14:00", "15:00", "16:00"];
+const availableSlots = ["13:00", "14:00", "15:00", "16:00", "17:00", "18:00"];
 
 const Reservation = () => {
   const [date, setDate] = useState<Date | undefined>(new Date());
@@ -57,44 +56,51 @@ const Reservation = () => {
     },
   });
 
-  /*const onSubmit = async (data: any) => {
-    try {
-      // TODO: Implement Supabase reservation creation
-      console.log("Reservation submitted:", data);
-      
-      toast({
-        title: "Réservation confirmée",
-        description: "Votre réservation a été enregistrée avec succès",
-      });
-      
-      form.reset();
-    } catch (error) {
-      console.error("Reservation error:", error);
-      toast({
-        title: "Erreur",
-        description: "Impossible de créer la réservation",
-        variant: "destructive",
-      });
-    }
-  };*/
-
   const onSubmit = async (data: any) => {
     try {
-      const { name, email, phone, date, time, formule } = data;
+      const { name, email, phone, time, formule } = data;
+
+      // Vérifier si une formule est sélectionnée
+      if (!selectedFormule) {
+        toast({
+          title: "Erreur",
+          description: "Veuillez sélectionner une formule.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Vérifier si une date est bien sélectionnée
+      if (!date) {
+        toast({
+          title: "Erreur",
+          description: "Veuillez sélectionner une date.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Calcul des horaires
+      const startTime = new Date(`${format(date, "yyyy-MM-dd")}T${time}:00`);
+      const endTime = new Date(
+        startTime.getTime() + selectedFormule.duration * 60000
+      );
+
+      console.log("Start Time (ISO): ", startTime.toISOString());
+      console.log("End Time (ISO): ", endTime.toISOString());
 
       // Créer une nouvelle réservation dans Supabase
-      const { error } = await supabase
-        .from("reservations") // Assurez-vous que la table 'reservations' existe dans Supabase
-        .insert([
-          {
-            guest_name: name,
-            guest_email: email,
-            guest_phone: phone,
-            date: format(new Date(date), "yyyy-MM-dd"), // Assurez-vous que la date est bien formatée
-            time: time,
-            formule: formule,
-          },
-        ]);
+      const { error } = await supabase.from("reservations").insert([
+        {
+          guest_name: name,
+          guest_email: email,
+          guest_phone: phone,
+          start_time: startTime.toISOString(), // Assure-toi que le format est bien ISO
+          end_time: endTime.toISOString(),
+          formule_title: selectedFormule.title,
+          formule_price: selectedFormule.price,
+        },
+      ]);
 
       if (error) throw error;
 
@@ -108,7 +114,7 @@ const Reservation = () => {
       console.error("Reservation error:", error);
       toast({
         title: "Erreur",
-        description: "Impossible de créer la réservation",
+        description: "Impossible de créer la réservation.",
         variant: "destructive",
       });
     }
@@ -165,7 +171,9 @@ const Reservation = () => {
                       <Calendar
                         mode="single"
                         selected={date}
-                        onSelect={setDate}
+                        onSelect={(selectedDate) => {
+                          setDate(selectedDate); // Mettre à jour la date ici
+                        }}
                         locale={fr}
                         className="rounded-md border"
                         disabled={(date) => date < new Date()}
