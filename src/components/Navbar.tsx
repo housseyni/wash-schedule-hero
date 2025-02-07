@@ -14,14 +14,20 @@ const Navbar = () => {
   ];
 
   return (
-    <nav className="fixed w-full bg-white/90 backdrop-blur-sm z-50 shadow-sm">
+    <nav className="fixed w-full bg-gradient-to-r from-blue-600 to-blue-400 text-white backdrop-blur-sm z-50 shadow-md">
       <div className="container mx-auto px-4">
         <div className="flex justify-between items-center h-16">
+          {/* Logo */}
           <a
             href="#"
-            className="font-heading text-2xl font-bold text-primary-600"
+            className="font-heading text-2xl font-bold text-white flex items-center space-x-2"
           >
-            DeustyWash
+            <img
+              src="/carwash-logo.png" // Remplacer par votre logo
+              alt="DeustyWash"
+              className="w-10 h-10"
+            />
+            {/*<span>DeustyWash</span> */}
           </a>
 
           {/* Desktop Menu */}
@@ -30,9 +36,9 @@ const Navbar = () => {
               <a
                 key={item.label}
                 href={item.href}
-                className="text-gray-600 hover:text-primary-600 transition-colors"
+                className="text-white hover:text-yellow-300 transition-colors flex items-center space-x-1"
               >
-                {item.label}
+                <span>{item.label}</span>
               </a>
             ))}
             <Auth />
@@ -50,12 +56,12 @@ const Navbar = () => {
 
         {/* Mobile Menu */}
         {isOpen && (
-          <div className="md:hidden py-4">
+          <div className="md:hidden py-4 bg-white shadow-lg">
             {navItems.map((item) => (
               <a
                 key={item.label}
                 href={item.href}
-                className="block py-2 text-gray-600 hover:text-primary-600 transition-colors"
+                className="block py-2 text-gray-800 hover:text-primary-600 transition-colors"
                 onClick={() => setIsOpen(false)}
               >
                 {item.label}

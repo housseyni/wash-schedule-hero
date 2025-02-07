@@ -1,5 +1,7 @@
 import { useState } from "react";
-import { Calendar } from "@/components/ui/calendar";
+import DatePicker from "react-datepicker";
+import "react-datepicker/dist/react-datepicker.css"; // Importer le style du calendrier
+import { FaCalendarAlt } from "react-icons/fa"; // Icône du calendrier
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/lib/supabase";
 import {
@@ -44,6 +46,7 @@ const Reservation = () => {
     null
   );
   const [guestMode, setGuestMode] = useState(false);
+  const [calendarOpen, setCalendarOpen] = useState(false);
 
   const form = useForm({
     defaultValues: {
@@ -58,9 +61,8 @@ const Reservation = () => {
 
   const onSubmit = async (data: any) => {
     try {
-      const { name, email, phone, time, formule } = data;
-
-      // Vérifier si une formule est sélectionnée
+      const { date, time, formule } = data;
+  
       if (!selectedFormule) {
         toast({
           title: "Erreur",
@@ -69,66 +71,94 @@ const Reservation = () => {
         });
         return;
       }
-
-      // Vérifier si une date est bien sélectionnée
-      if (!date) {
-        toast({
-          title: "Erreur",
-          description: "Veuillez sélectionner une date.",
-          variant: "destructive",
-        });
-        return;
+  
+      // Vérifier si l'utilisateur est connecté
+      let name = data.name;
+      let email = data.email;
+      let phone = data.phone;
+  
+      if (!guestMode) {
+        // Vérification de l'utilisateur connecté
+        const { data: userData, error: userError } = await supabase.auth.getUser();
+        if (userError || !userData?.user) {
+          throw new Error("Erreur d'authentification.");
+        }
+  
+        const user = userData.user;
+  
+        // Récupérer le profil de l'utilisateur
+        const { data: userProfile, error: profileError } = await supabase
+          .from("user_profiles")
+          .select("name, phone")
+          .eq("user_id", user.id)
+          .single();
+  
+        if (profileError) {
+          console.error("Erreur lors de la récupération du profil:", profileError.message);
+          throw new Error("Erreur lors de la récupération du profil utilisateur.");
+        }
+  
+        // Utiliser les informations de profil si elles existent
+        name = userProfile?.name || name;
+        phone = userProfile?.phone || phone;
+        email = user.email || email; // Email récupéré de Supabase
       }
-
-      // Calcul des horaires
-      const startTime = new Date(`${format(date, "yyyy-MM-dd")}T${time}:00`);
+  
+      // Construction de l'heure de début et de fin
+      const startTime = new Date(
+        `${format(new Date(date), "yyyy-MM-dd")}T${time}:00`
+      );
       const endTime = new Date(
         startTime.getTime() + selectedFormule.duration * 60000
       );
-
+  
       console.log("Start Time (ISO): ", startTime.toISOString());
       console.log("End Time (ISO): ", endTime.toISOString());
-
-      // Créer une nouvelle réservation dans Supabase
+  
+      // Insérer la réservation dans la base de données
       const { error } = await supabase.from("reservations").insert([
         {
           guest_name: name,
           guest_email: email,
           guest_phone: phone,
-          start_time: startTime.toISOString(), // Assure-toi que le format est bien ISO
+          start_time: startTime.toISOString(),
           end_time: endTime.toISOString(),
           formule_title: selectedFormule.title,
           formule_price: selectedFormule.price,
         },
       ]);
-
+  
       if (error) throw error;
-
+  
       toast({
         title: "Réservation confirmée",
         description: "Votre réservation a été enregistrée avec succès",
       });
-
-      form.reset(); // Réinitialiser le formulaire après la soumission
-    } catch (error) {
+  
+      form.reset();
+    } catch (error: any) {
       console.error("Reservation error:", error);
       toast({
         title: "Erreur",
-        description: "Impossible de créer la réservation.",
+        description: error.message || "Impossible de créer la réservation.",
         variant: "destructive",
       });
     }
   };
+  
+  
+  
 
   return (
-    <section id="reservation" className="py-20">
+    <section id="reservation" className="py-20 bg-gray-50">
       <div className="container mx-auto px-4">
-        <h2 className="text-4xl font-heading font-bold text-center mb-12">
+        <h2 className="text-4xl font-heading font-bold text-center text-blue-700 mb-12">
           Réservation
         </h2>
         <div className="max-w-3xl mx-auto">
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+              {/* Formule Select */}
               <FormField
                 control={form.control}
                 name="formule"
@@ -161,29 +191,41 @@ const Reservation = () => {
                 )}
               />
 
+              {/* Date Picker avec icône à l'intérieur de l'input */}
               <FormField
                 control={form.control}
                 name="date"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Date</FormLabel>
+                    <FormLabel>Sélectionner une date</FormLabel>
                     <FormControl>
-                      <Calendar
-                        mode="single"
-                        selected={date}
-                        onSelect={(selectedDate) => {
-                          setDate(selectedDate); // Mettre à jour la date ici
-                        }}
-                        locale={fr}
-                        className="rounded-md border"
-                        disabled={(date) => date < new Date()}
-                      />
+                      <div className="relative">
+                        <DatePicker
+                          selected={date}
+                          onChange={(date: Date) => setDate(date)}
+                          locale={fr}
+                          dateFormat="dd/MM/yyyy"
+                          className="w-full pl-2 pr-10 border border-gray-300 rounded-md shadow-sm focus:ring-2 focus:ring-blue-500"
+                          minDate={new Date()}
+                          open={calendarOpen}
+                          onClickOutside={() => setCalendarOpen(false)}
+                        />
+                        {/* Icône de calendrier intégrée à l'intérieur de l'input */}
+                        <button
+                          type="button"
+                          onClick={() => setCalendarOpen(!calendarOpen)}
+                          className="absolute right-2 top-1/2 transform -translate-y-1/2"
+                        >
+                          <FaCalendarAlt className="text-blue-600" />
+                        </button>
+                      </div>
                     </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
 
+              {/* Time Select */}
               <FormField
                 control={form.control}
                 name="time"
@@ -209,16 +251,19 @@ const Reservation = () => {
                 )}
               />
 
+              {/* Guest Mode Button */}
               {!guestMode && (
                 <Button
                   type="button"
                   variant="link"
                   onClick={() => setGuestMode(true)}
+                  className="text-blue-600 hover:text-blue-800"
                 >
                   Réserver sans compte
                 </Button>
               )}
 
+              {/* User Details Form */}
               {guestMode && (
                 <>
                   <FormField
@@ -228,7 +273,11 @@ const Reservation = () => {
                       <FormItem>
                         <FormLabel>Nom</FormLabel>
                         <FormControl>
-                          <Input {...field} required />
+                          <Input
+                            {...field}
+                            required
+                            className="border-gray-300 shadow-sm focus:ring-2 focus:ring-blue-500"
+                          />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -242,7 +291,12 @@ const Reservation = () => {
                       <FormItem>
                         <FormLabel>Email</FormLabel>
                         <FormControl>
-                          <Input type="email" {...field} required />
+                          <Input
+                            type="email"
+                            {...field}
+                            required
+                            className="border-gray-300 shadow-sm focus:ring-2 focus:ring-blue-500"
+                          />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -256,7 +310,12 @@ const Reservation = () => {
                       <FormItem>
                         <FormLabel>Téléphone</FormLabel>
                         <FormControl>
-                          <Input type="tel" {...field} required />
+                          <Input
+                            type="tel"
+                            {...field}
+                            required
+                            className="border-gray-300 shadow-sm focus:ring-2 focus:ring-blue-500"
+                          />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -265,7 +324,11 @@ const Reservation = () => {
                 </>
               )}
 
-              <Button type="submit" className="w-full">
+              {/* Submit Button */}
+              <Button
+                type="submit"
+                className="w-full bg-blue-600 hover:bg-blue-700 text-white mt-4"
+              >
                 Réserver
               </Button>
             </form>

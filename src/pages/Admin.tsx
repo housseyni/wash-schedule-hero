@@ -1,9 +1,10 @@
 import AdminCalendar from "@/components/AdminCalendar";
-
+//import NavbarAdmin from "@/components/NavbarAdmin"; // Assurez-vous d'importer la Navbar
 const Admin = () => {
   return (
     <div className="min-h-screen p-4">
-      <h1 className="text-3xl font-bold mb-8">Administration</h1>
+      {/* Navbar ajoutée ici */}
+   
       <AdminCalendar />
     </div>
   );

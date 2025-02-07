@@ -1,6 +1,4 @@
 import { Button } from "@/components/ui/button";
-// Assurez-vous que le chemin est correct
-
 import {
   Dialog,
   DialogContent,
@@ -20,6 +18,8 @@ const Auth = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
+  const [firstName, setFirstName] = useState(""); // Prénom
+  const [phone, setPhone] = useState(""); // Numéro de téléphone
   const [isLoading, setIsLoading] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -40,18 +40,38 @@ const Auth = () => {
           description: "Bienvenue !",
         });
       } else {
-        const { error } = await supabase.auth.signUp({
+        // Inscription de l'utilisateur
+        const { data, error: signUpError } = await supabase.auth.signUp({
           email,
           password,
           options: {
             data: {
               name,
-              role: 'user',
+              first_name: firstName, // Ajout du prénom
+              phone,
+              role: "user",
             },
           },
         });
 
-        if (error) throw error;
+        if (signUpError) throw signUpError;
+
+        const user = data?.user; // Vérification correcte de l'objet user
+
+        if (user) {
+          // Insertion des données supplémentaires dans la table user_profiles
+          const { error: profileError } = await supabase
+            .from("user_profiles")
+            .insert([
+              {
+                user_id: user.id,
+                first_name: firstName,
+                phone: phone,
+              },
+            ]);
+
+          if (profileError) throw profileError;
+        }
 
         toast({
           title: "Inscription réussie",
@@ -85,17 +105,43 @@ const Auth = () => {
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
+          {/* Pour l'inscription, ajoutez les champs Prénom et Numéro de téléphone */}
           {!isLogin && (
-            <div className="space-y-2">
-              <Label htmlFor="name">Nom</Label>
-              <Input
-                id="name"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                required
-              />
-            </div>
+            <>
+              <div className="space-y-2">
+                <Label htmlFor="name">Nom</Label>
+                <Input
+                  id="name"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  required
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="firstName">Prénom</Label>
+                <Input
+                  id="firstName"
+                  value={firstName}
+                  onChange={(e) => setFirstName(e.target.value)}
+                  required
+                />
+              </div>
+            </>
           )}
+
+          {/* Numéro de téléphone avant l'email */}
+          <div className="space-y-2">
+            <Label htmlFor="phone">Numéro de téléphone</Label>
+            <Input
+              id="phone"
+              type="tel"
+              value={phone}
+              onChange={(e) => setPhone(e.target.value)}
+              required
+            />
+          </div>
+
           <div className="space-y-2">
             <Label htmlFor="email">Email</Label>
             <Input
